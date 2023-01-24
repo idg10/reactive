@@ -15,7 +15,7 @@ Rx has always run on multiple .NET platforms. Some parts of Rx (notably how sche
 * In v1, Microsoft built multiple different versions of the Rx libraries for different platforms. (This was long before .NET Standard or even before Portable Class Libraries.)
 * v2 was designed to take advantage of the (then new, now defunct) Portable Class Library (PCL) concept. Assemblies were in one of these categories:
   * A portable core
-    * `System.Reactive.Interfaces` (in the `Rx-Interfaces`](https://www.nuget.org/packages/Rx-Interfaces/2.2.5) NuGet package)—originally conceived as an assembly that would stay on v2.0.0.0 indefinitely, containing the canonical definitions of core interfaces
+    * `System.Reactive.Interfaces` (in the [`Rx-Interfaces`](https://www.nuget.org/packages/Rx-Interfaces/2.2.5) NuGet package)—originally conceived as an assembly that would stay on v2.0.0.0 indefinitely, containing the canonical definitions of core interfaces
     * `System.Reactive.Core` (in the [`Rx-Core`](https://www.nuget.org/packages/Rx-Core/2.2.5) NuGet package)—platform-independent schedulers, and utility types for implementing Rx operators
     * `System.Reactive.Linq` (in the [`Rx-Linq`](https://www.nuget.org/packages/Rx-Linq/2.2.5) NuGet package)—implementations of LINQ operators for Rx
     * The [v2.0 beta announcement](http://web.archive.org/web/20130522225545/http://blogs.msdn.com/b/rxteam/archive/2012/03/12/reactive-extensions-v2-0-beta-available-now.aspx) mentions `System.Reactive.Providers`—expression tree support for Rx LINQ—but I don't see this on NuGet, so I'm not sure if it got rolled into something else

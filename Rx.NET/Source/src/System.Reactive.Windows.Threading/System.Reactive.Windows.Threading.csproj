@@ -1,0 +1,28 @@
+﻿<Project Sdk="MSBuild.Sdk.Extras">
+
+  <PropertyGroup>
+    <!--
+    The uap10.0.16299 target framework looks odd here, as System.Reactive.WindowsRuntime seems like
+    the more natural home for those types. But apparently CoreDispatcherScheduler and CoreDispatcherObservable
+    were in this component at one point.
+    -->
+    <TargetFrameworks>net472;uap10.0.16299;net6.0-windows10.0.19041</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net6.0-windows'))">
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net472'">
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Include="..\AssemblyInfo.cs" Link="AssemblyInfo.cs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\System.Reactive\System.Reactive.csproj" />
+  </ItemGroup>
+    
+</Project>

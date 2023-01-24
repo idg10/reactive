@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28407.52
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "System.Reactive", "src\System.Reactive\System.Reactive.csproj", "{01706A0F-8A63-4FD6-AF45-0BC0BED3C0D9}"
 EndProject
@@ -44,9 +44,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "System.Reactive.Providers",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "System.Reactive.Runtime.Remoting", "facades\System.Reactive.Runtime.Remoting\System.Reactive.Runtime.Remoting.csproj", "{D2303705-01E6-404E-9034-F9CCE502DF00}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "System.Reactive.Windows.Forms", "facades\System.Reactive.Windows.Forms\System.Reactive.Windows.Forms.csproj", "{15585B53-9F85-4439-9D80-D827F1AD91E6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "System.Reactive.Windows.Forms", "src\System.Reactive.Windows.Forms\System.Reactive.Windows.Forms.csproj", "{15585B53-9F85-4439-9D80-D827F1AD91E6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "System.Reactive.Windows.Threading", "facades\System.Reactive.Windows.Threading\System.Reactive.Windows.Threading.csproj", "{4DCC120A-FD19-409B-A0E6-A049C4D0B663}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "System.Reactive.Windows.Threading", "src\System.Reactive.Windows.Threading\System.Reactive.Windows.Threading.csproj", "{4DCC120A-FD19-409B-A0E6-A049C4D0B663}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "System.Reactive.WindowsRuntime", "facades\System.Reactive.WindowsRuntime\System.Reactive.WindowsRuntime.csproj", "{E9BB350B-D4EF-42E1-B4E2-14058AC6809B}"
 EndProject
@@ -361,8 +361,6 @@ Global
 		{BA291C8D-1ECB-4C87-9C50-10474F3A15A5} = {A0F39260-B8F8-4FCB-9679-0ED917A22BDF}
 		{79C55CAE-E1B8-4808-9970-73D893627B99} = {A0F39260-B8F8-4FCB-9679-0ED917A22BDF}
 		{D2303705-01E6-404E-9034-F9CCE502DF00} = {A0F39260-B8F8-4FCB-9679-0ED917A22BDF}
-		{15585B53-9F85-4439-9D80-D827F1AD91E6} = {A0F39260-B8F8-4FCB-9679-0ED917A22BDF}
-		{4DCC120A-FD19-409B-A0E6-A049C4D0B663} = {A0F39260-B8F8-4FCB-9679-0ED917A22BDF}
 		{E9BB350B-D4EF-42E1-B4E2-14058AC6809B} = {A0F39260-B8F8-4FCB-9679-0ED917A22BDF}
 		{A31DDC7E-E883-4DBD-8FB8-D7DFC56059F6} = {A0F39260-B8F8-4FCB-9679-0ED917A22BDF}
 		{01CCDA6D-4D00-4DF2-82B0-359FD5E0CDC6} = {D324579D-CBE6-4867-8980-D7842C7C45A2}

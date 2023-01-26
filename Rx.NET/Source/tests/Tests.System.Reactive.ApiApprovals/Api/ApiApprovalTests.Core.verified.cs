@@ -1,4 +1,4 @@
-[assembly: System.CLSCompliant(true)]
+﻿[assembly: System.CLSCompliant(true)]
 [assembly: System.Resources.NeutralResourcesLanguage("en-US")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo(@"Tests.System.Reactive, PublicKey=00240000048000009400000006020000002400005253413100040000010001008f5cff058631087031f8350f30a36fa078027e5df2316b564352dc9eb7af7ce856016d3c5e9d058036fe73bb5c83987bd3fc0793fbe25d633cc4f37c2bd5f1d717cd2a81661bec08f0971dc6078e17bde372b89005e7738a0ebd501b896ca3e8315270ff64df7809dd912c372df61785a5085b3553b7872e39b1b1cc0ff5a6bc")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo(@"Tests.System.Reactive.Uwp.DeviceRunner, PublicKey=00240000048000009400000006020000002400005253413100040000010001008f5cff058631087031f8350f30a36fa078027e5df2316b564352dc9eb7af7ce856016d3c5e9d058036fe73bb5c83987bd3fc0793fbe25d633cc4f37c2bd5f1d717cd2a81661bec08f0971dc6078e17bde372b89005e7738a0ebd501b896ca3e8315270ff64df7809dd912c372df61785a5085b3553b7872e39b1b1cc0ff5a6bc")]
@@ -236,14 +236,6 @@ namespace System.Reactive.Concurrency
         public void Dispose() { }
         public void Wait(System.Action action) { }
     }
-    public class ControlScheduler : System.Reactive.Concurrency.LocalScheduler, System.Reactive.Concurrency.ISchedulerPeriodic
-    {
-        public ControlScheduler(System.Windows.Forms.Control control) { }
-        public System.Windows.Forms.Control Control { get; }
-        public override System.IDisposable Schedule<TState>(TState state, System.Func<System.Reactive.Concurrency.IScheduler, TState, System.IDisposable> action) { }
-        public override System.IDisposable Schedule<TState>(TState state, System.TimeSpan dueTime, System.Func<System.Reactive.Concurrency.IScheduler, TState, System.IDisposable> action) { }
-        public System.IDisposable SchedulePeriodic<TState>(TState state, System.TimeSpan period, System.Func<TState, TState> action) { }
-    }
     public sealed class CurrentThreadScheduler : System.Reactive.Concurrency.LocalScheduler
     {
         [System.Obsolete("This instance property is no longer supported. Use CurrentThreadScheduler.IsSched" +
@@ -257,20 +249,6 @@ namespace System.Reactive.Concurrency
     {
         public static System.Reactive.Concurrency.DefaultScheduler Instance { get; }
         protected override object? GetService(System.Type serviceType) { }
-        public override System.IDisposable Schedule<TState>(TState state, System.Func<System.Reactive.Concurrency.IScheduler, TState, System.IDisposable> action) { }
-        public override System.IDisposable Schedule<TState>(TState state, System.TimeSpan dueTime, System.Func<System.Reactive.Concurrency.IScheduler, TState, System.IDisposable> action) { }
-        public System.IDisposable SchedulePeriodic<TState>(TState state, System.TimeSpan period, System.Func<TState, TState> action) { }
-    }
-    public class DispatcherScheduler : System.Reactive.Concurrency.LocalScheduler, System.Reactive.Concurrency.ISchedulerPeriodic
-    {
-        public DispatcherScheduler(System.Windows.Threading.Dispatcher dispatcher) { }
-        public DispatcherScheduler(System.Windows.Threading.Dispatcher dispatcher, System.Windows.Threading.DispatcherPriority priority) { }
-        public System.Windows.Threading.Dispatcher Dispatcher { get; }
-        public System.Windows.Threading.DispatcherPriority Priority { get; }
-        public static System.Reactive.Concurrency.DispatcherScheduler Current { get; }
-        [System.Obsolete("Use the Current property to retrieve the DispatcherScheduler instance for the cur" +
-            "rent thread\'s Dispatcher object.")]
-        public static System.Reactive.Concurrency.DispatcherScheduler Instance { get; }
         public override System.IDisposable Schedule<TState>(TState state, System.Func<System.Reactive.Concurrency.IScheduler, TState, System.IDisposable> action) { }
         public override System.IDisposable Schedule<TState>(TState state, System.TimeSpan dueTime, System.Func<System.Reactive.Concurrency.IScheduler, TState, System.IDisposable> action) { }
         public System.IDisposable SchedulePeriodic<TState>(TState state, System.TimeSpan period, System.Func<TState, TState> action) { }
@@ -813,28 +791,6 @@ namespace System.Reactive.Joins
 }
 namespace System.Reactive.Linq
 {
-    public static class ControlObservable
-    {
-        public static System.IObservable<TSource> ObserveOn<TSource>(this System.IObservable<TSource> source, System.Windows.Forms.Control control) { }
-        public static System.IObservable<TSource> SubscribeOn<TSource>(this System.IObservable<TSource> source, System.Windows.Forms.Control control) { }
-    }
-    public static class DispatcherObservable
-    {
-        public static System.IObservable<TSource> ObserveOn<TSource>(this System.IObservable<TSource> source, System.Reactive.Concurrency.DispatcherScheduler scheduler) { }
-        public static System.IObservable<TSource> ObserveOn<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.Dispatcher dispatcher) { }
-        public static System.IObservable<TSource> ObserveOn<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.DispatcherObject dispatcherObject) { }
-        public static System.IObservable<TSource> ObserveOn<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.Dispatcher dispatcher, System.Windows.Threading.DispatcherPriority priority) { }
-        public static System.IObservable<TSource> ObserveOn<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.DispatcherObject dispatcherObject, System.Windows.Threading.DispatcherPriority priority) { }
-        public static System.IObservable<TSource> ObserveOnDispatcher<TSource>(this System.IObservable<TSource> source) { }
-        public static System.IObservable<TSource> ObserveOnDispatcher<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.DispatcherPriority priority) { }
-        public static System.IObservable<TSource> SubscribeOn<TSource>(this System.IObservable<TSource> source, System.Reactive.Concurrency.DispatcherScheduler scheduler) { }
-        public static System.IObservable<TSource> SubscribeOn<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.Dispatcher dispatcher) { }
-        public static System.IObservable<TSource> SubscribeOn<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.DispatcherObject dispatcherObject) { }
-        public static System.IObservable<TSource> SubscribeOn<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.Dispatcher dispatcher, System.Windows.Threading.DispatcherPriority priority) { }
-        public static System.IObservable<TSource> SubscribeOn<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.DispatcherObject dispatcherObject, System.Windows.Threading.DispatcherPriority priority) { }
-        public static System.IObservable<TSource> SubscribeOnDispatcher<TSource>(this System.IObservable<TSource> source) { }
-        public static System.IObservable<TSource> SubscribeOnDispatcher<TSource>(this System.IObservable<TSource> source, System.Windows.Threading.DispatcherPriority priority) { }
-    }
     public interface IGroupedObservable<out TKey, out TElement> : System.IObservable<TElement>
     {
         TKey Key { get; }

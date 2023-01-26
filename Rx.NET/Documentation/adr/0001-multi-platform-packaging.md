@@ -1,6 +1,6 @@
 # NuGet packages and multi-platform support
 
-Rx has tried a few strategies for cross-platform support over its history. The approach used in Rx v5.0 has turned out to cause problems for some UI frameworks on the latest versions of .NET: self-contained deployments would end up including copies of various WPF and Windows Forms components whether they used them or not, causing binaries to be tens of megabytes larger than they otherwise would have been.
+Rx has tried a few strategies for cross-platform support over its history. The approach used in Rx v5.0 has turned out to cause problems for some UI frameworks on the latest versions of .NET: self-contained deployments would end up including copies of various WPF and Windows Forms components whether they used them or not, causing binaries to be tens of megabytes larger than they otherwise would have been. (https://github.com/AvaloniaUI/Avalonia/issues/9549 describes one example of this problem.)
 
 This ADR describes a change in approach designed to address this.
 
@@ -36,8 +36,8 @@ Rx has always run on multiple .NET platforms. This caused two distinct but relat
   * `Rx-Linq` becomes `System.Reactive.Linq`
   * `Rx-PlatformServices` becomes `System.Reactive.PlatformServices`
   * Likewise, the framework-specific libraries `System.Reactive.Windows.Threading`, `System.Reactive.Windows.Forms`, and `System.Reactive.WindowsRuntime` move into eponymous packages
-* v4 made a major change: everything is now in a single `System.Reactive` package
-* v5 stuck with the same structure as v4
+* v4 made a major change: everything is now in a single `System.Reactive` package; the old packages still exist but now contain nothing by type forwarders pointing back into `System.Reactive`; targets `net46`, `uap10`, `uap10.0.16299`, and `netstandard2.0`
+* v5 stuck with the same structure as v4; targets `net472`, `uap10.0.16299`, `netcoreapp3.1`, `net5.0`, `net5.0-windows10.0.19041`, and `netstandard2.0`
 
 The historical split between `System.Reactive.Windows.Threading` and `System.Reactive.WindowsRuntime` is a little baffling. It's not clear why some WinRT stuff ended up in its own library, and some shared a library with WPF, Silverlight, and Windows Phone.
 
@@ -62,7 +62,7 @@ Suppose the host application runs in .NET 4.5, and it loads Plug-in A. This is O
 
 So far, so good.
 
-Now suppose the host loads Plug-in B. It will also want to load `System.Reactive.Linq.dll`, but the CLR will notice that it has already loaded that component. The critical detail here is that the `System.Reactive.Linq.dll` files in the `lib\net40` and `lib\net45` folders have **the same name, public key token, and version number**. The .NET Framework assembly loader therefore considers them to have the same identity, despite being different files with different contents. So when Plug-in B comes to try to use `System.Reactive.Linq.dll`, the CLR will just let it use the same one that was loaded on behalf of Plug-in A. (It won't even look at Plug-in B's copy, because it has every reason to believe that it is identical—it has the exact same fully-qualified name, after all.) But if Plug-in B is relying on any functionality specific to the `net45` version of that component, it will be disappointed, and we will runtime errors such as `MethodNotFoundException`.
+Now suppose the host loads Plug-in B. It will also want to load `System.Reactive.Linq.dll`, but the CLR will notice that it has already loaded that component. The critical detail here is that the `System.Reactive.Linq.dll` files in the `lib\net40` and `lib\net45` folders have **the same name, public key token, and version number**. The .NET Framework assembly loader therefore considers them to have the same identity, despite being different files with different contents. So when Plug-in B comes to try to use `System.Reactive.Linq.dll`, the loader will just use the same one that was loaded on behalf of Plug-in A. (It won't even look at Plug-in B's copy, because it has every reason to believe that it is identical—it has the exact same fully-qualified name, after all.) But if Plug-in B is relying on any functionality specific to the `net45` version of that component, it will be disappointed, and we will runtime errors such as `MethodNotFoundException`.
 
 This tends not to be an issue with modern versions of .NET because we have [`AssemblyLoadContext`]([https://learn.microsoft.com/en-us/dotnet/core/dependency-loading/understanding-assemblyloadcontext) to solve this very problem. But with .NET Framework, this was a serious problem for plug-in hosts.
 
@@ -72,7 +72,7 @@ At the time this was proposed, it was [acknowledged](https://github.com/dotnet/r
 
 There were other issues in practice. [Issue #305](https://github.com/dotnet/reactive/issues/305) shows one example of the baffling kinds of problems that could emerge.
 
-This led to the decision to restructure Rx so that it is all in a single DLL. This solved the problem described in #305: if Rx is just one DLL, you can't get into a situation in which different bits of Rx seem to disagree about which version is in use. There is only one bit of it.
+This led to the decision to restructure Rx so that it is all in a single DLL. This solved the problem described in #305: if Rx is just one DLL, you can't get into a situation in which different bits of Rx seem to disagree about which Rx version is in use. If Rx is only one binary, then there's no scope for getting a mixture of versions.
 
 ### Revisiting the decisions in 2023
 
@@ -127,7 +127,7 @@ With that in mind, let's now consider some possible choices.
 * A `System.Reactive.Core` component (comprising interface definitions, common implementation details, and LINQ implementation) with netstandard2.0, .net6.0 and uap10 (no net472)
 * A System.Reactive component where platform-specific targets (net472, .net6.0, uap10) supply enlightenments (e.g., via a `System.Reactive.PlatformServices` component like we used to have)
 * UI-framework-specific Rx types (e.g, `ControlDispatcher`, and `ControlObservable`) are supplied in per-framework components (e.g., `System.Reactive.Windows.Forms`, `System.Reactive.Maui`, `System.Reactive.Wpf`; the old multi-platform `System.Reactive.Windows.Threading` would exist for backcompat, but would just contain type forwarders)
-* No version number monkey business—assemblies are all version 6.0.0.0 (or 7.0.0.0, etc.)
+* No version number adjustment—assemblies are all version 6.0.0.0 (or 7.0.0.0, etc.)
 
 (TBD: it's not entirely clear whether we really need a `uap10` version of the core parts. If it turns out the `netstandard2.0` target would work on on that, perhaps suitably enlightened by `System.Reactive.PlatformServices`, then `System.Reactive.Core` would target just `netstandard2.0` and `net6.0`. The reason I'm doubtful is that some supposedly-`netstandard2.0`-capable runtimes don't really support it properly. We need to work out whether `uap10` is one of those.)
 

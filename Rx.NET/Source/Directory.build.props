@@ -37,8 +37,11 @@
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.4.255" PrivateAssets="all" />
   </ItemGroup>
 
+  <!--
+  Doesn't seem to be compatible with UWP test projects
+  
   <ItemGroup Condition="'$(IsTestProject)' == 'true'">
     <PackageReference Include="coverlet.collector" Version="3.1.1" />
-  </ItemGroup>
+  </ItemGroup>-->
 
 </Project>

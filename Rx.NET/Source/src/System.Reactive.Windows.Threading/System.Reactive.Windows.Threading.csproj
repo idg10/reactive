@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <!--
-    The uap10.0.16299 target framework looks odd here, as System.Reactive.WindowsRuntime seems like
+    The uap target framework looks odd here, as System.Reactive.WindowsRuntime seems like
     the more natural home for those types. But apparently CoreDispatcherScheduler and CoreDispatcherObservable
     were in this component at one point.
     -->
-    <TargetFrameworks>net472;uap10.0.16299;net6.0-windows10.0.19041</TargetFrameworks>
+    <TargetFrameworks>net472;uap10.0.18362;net6.0-windows10.0.19041</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(TargetFramework.StartsWith('net6.0-windows'))">

@@ -25,7 +25,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NETFX_CORE;WINDOWS_UWP;CODE_ANALYSIS;NO_EVENTARGS_CONSTRAINT;HAS_EDI;HAS_WINRT;HAS_PROGRESS;PREFER_ASYNC;HAS_AWAIT;HAS_APTCA;HAS_TPL46;NO_REMOTING;NO_SERIALIZABLE;NO_THREAD;CRIPPLED_REFLECTION;WINDOWS;USE_TIMER_SELF_ROOT</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETFX_CORE;WINDOWS_UWP;CODE_ANALYSIS;NO_EVENTARGS_CONSTRAINT;HAS_EDI;HAS_WINRT;HAS_PROGRESS;PREFER_ASYNC;HAS_AWAIT;HAS_APTCA;HAS_TPL46;NO_REMOTING;WINDOWS;USE_TIMER_SELF_ROOT</DefineConstants>
     <NoWarn>;2008;0618</NoWarn>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -35,7 +35,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP;CODE_ANALYSIS;NO_EVENTARGS_CONSTRAINT;HAS_EDI;HAS_WINRT;HAS_PROGRESS;PREFER_ASYNC;HAS_AWAIT;HAS_APTCA;HAS_TPL46;NO_REMOTING;NO_SERIALIZABLE;NO_THREAD;CRIPPLED_REFLECTION;WINDOWS;USE_TIMER_SELF_ROOT</DefineConstants>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP;CODE_ANALYSIS;NO_EVENTARGS_CONSTRAINT;HAS_EDI;HAS_WINRT;HAS_PROGRESS;PREFER_ASYNC;HAS_AWAIT;HAS_APTCA;HAS_TPL46;NO_REMOTING;WINDOWS;USE_TIMER_SELF_ROOT</DefineConstants>
     <Optimize>true</Optimize>
     <NoWarn>;2008;0618</NoWarn>
     <DebugType>pdbonly</DebugType>
@@ -118,6 +118,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Tests\Concurrency\WindowsThreadPoolSchedulerTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -157,6 +158,10 @@
     <ProjectReference Include="..\..\src\System.Reactive.Observable.Aliases\System.Reactive.Observable.Aliases.csproj">
       <Project>{cb5e4ffa-f510-43f1-b378-b3d7ba7c8396}</Project>
       <Name>System.Reactive.Observable.Aliases</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\System.Reactive.Windows.Threading\System.Reactive.Windows.Threading.csproj">
+      <Project>{4dcc120a-fd19-409b-a0e6-a049c4d0b663}</Project>
+      <Name>System.Reactive.Windows.Threading</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\System.Reactive\System.Reactive.csproj">
       <Project>{01706a0f-8a63-4fd6-af45-0bc0bed3c0d9}</Project>

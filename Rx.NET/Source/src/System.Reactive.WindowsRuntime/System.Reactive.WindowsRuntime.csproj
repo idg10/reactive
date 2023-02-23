@@ -1,0 +1,66 @@
+﻿<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <TargetFrameworks>uap10.0.18362;net6.0-windows10.0.19041</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'uap10.0.18362'">
+    <!--
+    I was unable to find a combination of project file contents across the entire solution that
+    would get us a warning-free build and a warning-free load in VS while using the
+    MSBuild.Sdk.Extras SDK on this project, so I reverted to the Microsoft.NET.Sdk. So we have to
+    provide the various settings that MSBuild.Sdk.Extras would normally provide for us.
+    -->
+    <NugetTargetMoniker>uap10.0.18362</NugetTargetMoniker>
+
+    <!-- I don't know how this is supposed get set. It is set automatically in MSBuild Extras projects but I can't work out how. -->
+    <SDKIdentifier>Windows</SDKIdentifier>
+    <SDKVersion>10.0</SDKVersion>
+
+    <TargetFrameworkIdentifier>.NETCore</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
+    <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+    
+    <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.18362.0</TargetPlatformMinVersion>
+
+    <ImplicitlyExpandTargetFramework>true</ImplicitlyExpandTargetFramework>
+    <ImplicitlyExpandTargetPlatform>true</ImplicitlyExpandTargetPlatform>
+
+    <DefineConstants>$(DefineConstants);HAS_WINRT</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'uap10.0.18362'">
+    <!--<_SdkImplicitReference Update="@(_SdkImplicitReference)" Pack="false"/>
+    <_SdkImplicitReference Remove="@(Reference)"/>
+    <Reference Include="@(_SdkImplicitReference)"/>-->
+
+    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.1.2" />
+  </ItemGroup> 
+
+  <ItemGroup>
+    <Compile Include="..\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\System.Reactive\System.Reactive.csproj" />
+  </ItemGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <!--
+  This is a slightly funky way to import the UWP targets. The problem is, they aren't designed to
+  be used from .NET SDK style projects, and this is the only way I've found to get the features
+  we need (in particular, locating and adding references for the correct WinMD files from the
+  Windows SDK).
+  The MSBuild.Sdk.Extras SDK offered a more elegant approach (largely by jumping through all the
+  hoops on your behalf, and hiding that in places you wouldn't normally look), but I was unable
+  to find a way to get a clean build across the entire solution after removing the UWP target
+  from System.Reactive while still using MSBuild.Sdk.Extras.
+  -->
+  <Import Condition="'$(TargetFramework)' == 'uap10.0.18362'" Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.Common.targets"/>
+  <Import Condition="'$(TargetFramework)' == 'uap10.0.18362'" Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\$(RedirectionTarget)\Microsoft.Windows.UI.Xaml.Common.targets" />
+  <Import Condition="'$(TargetFramework)' == 'uap10.0.18362'" Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\$(RedirectionTarget)\Microsoft.Windows.UI.Xaml.Cps.targets" />
+
+</Project>

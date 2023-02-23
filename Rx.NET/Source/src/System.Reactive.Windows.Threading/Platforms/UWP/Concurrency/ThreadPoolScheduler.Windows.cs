@@ -13,33 +13,33 @@ namespace System.Reactive.Concurrency
     /// </summary>
     /// <seealso cref="Default">Singleton instance of this type exposed through this static property.</seealso>
     [CLSCompliant(false)]
-    public sealed class ThreadPoolScheduler : LocalScheduler, ISchedulerPeriodic
+    public sealed class WindowsThreadPoolScheduler : LocalScheduler, ISchedulerPeriodic
     {
-        private static readonly Lazy<ThreadPoolScheduler> LazyDefault = new Lazy<ThreadPoolScheduler>(static () => new ThreadPoolScheduler());
+        private static readonly Lazy<WindowsThreadPoolScheduler> LazyDefault = new Lazy<WindowsThreadPoolScheduler>(static () => new WindowsThreadPoolScheduler());
 
         /// <summary>
-        /// Constructs a ThreadPoolScheduler that schedules units of work on the Windows ThreadPool.
+        /// Constructs a UapThreadPoolScheduler that schedules units of work on the Windows ThreadPool.
         /// </summary>
-        public ThreadPoolScheduler()
+        public WindowsThreadPoolScheduler()
         {
         }
 
         /// <summary>
-        /// Constructs a ThreadPoolScheduler that schedules units of work on the Windows ThreadPool with the given priority.
+        /// Constructs a UapThreadPoolScheduler that schedules units of work on the Windows ThreadPool with the given priority.
         /// </summary>
         /// <param name="priority">Priority for scheduled units of work.</param>
-        public ThreadPoolScheduler(WorkItemPriority priority)
+        public WindowsThreadPoolScheduler(WorkItemPriority priority)
         {
             Priority = priority;
             Options = WorkItemOptions.None;
         }
 
         /// <summary>
-        /// Constructs a ThreadPoolScheduler that schedules units of work on the Windows ThreadPool with the given priority.
+        /// Constructs a UapThreadPoolScheduler that schedules units of work on the Windows ThreadPool with the given priority.
         /// </summary>
         /// <param name="priority">Priority for scheduled units of work.</param>
         /// <param name="options">Options that configure how work is scheduled.</param>
-        public ThreadPoolScheduler(WorkItemPriority priority, WorkItemOptions options)
+        public WindowsThreadPoolScheduler(WorkItemPriority priority, WorkItemOptions options)
         {
             Priority = priority;
             Options = options;
@@ -50,12 +50,12 @@ namespace System.Reactive.Concurrency
         /// </summary>
         [Obsolete("Use the Instance property", false)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ThreadPoolScheduler Default => LazyDefault.Value;
+        public static WindowsThreadPoolScheduler Default => LazyDefault.Value;
 
         /// <summary>
         /// Gets the singleton instance of the Windows Runtime thread pool scheduler.
         /// </summary>
-        public static ThreadPoolScheduler Instance => LazyDefault.Value;
+        public static WindowsThreadPoolScheduler Instance => LazyDefault.Value;
 
         /// <summary>
         /// Gets the priority at which work is scheduled.

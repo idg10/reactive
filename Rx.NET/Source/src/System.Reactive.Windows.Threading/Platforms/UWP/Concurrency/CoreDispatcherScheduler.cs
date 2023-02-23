@@ -56,7 +56,7 @@ namespace System.Reactive.Concurrency
                 var window = CoreWindow.GetForCurrentThread();
                 if (window == null)
                 {
-                    throw new InvalidOperationException(Strings_WindowsThreading.NO_WINDOW_CURRENT);
+                    throw new InvalidOperationException(Strings_UwpWindowsThreading.NO_WINDOW_CURRENT);
                 }
 
                 return new CoreDispatcherScheduler(window.Dispatcher);

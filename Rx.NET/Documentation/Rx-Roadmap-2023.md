@@ -163,5 +163,8 @@ This is not an exhaustive list, but it should include:
 * Xamarin
 * WinUI
 * Visual Studio plug-ins
+* MAUI
+* Blazor
+* Uno
 
 Obviously, WPF, Windows Forms, and UWP support are also important, but since we already provide framework-specific features for those, they are different. This list is for platforms that we don't intend to provide any explicit features for, but which we want to work anyway.

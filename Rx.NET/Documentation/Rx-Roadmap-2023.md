@@ -2,6 +2,15 @@
 
 As of February 2023, `System.Reactive` (aka Rx.NET, Rx for short in this document) has been moribund for a while. This document describes the plan for bringing it back to life.
 
+## Proposal in brief
+
+* an initial [V.next](#vnext-v51) (called either V5.1 or 6.0, TBD) bringing the build process and TFMs up to date (dropping out-of-support targets such as `netcoreapp3.1` and `net5.0` and replacing them with the current LTS equivalent such as `net6.0`)
+* work in parallel on an `alpha`-labeled release of NuGet packages for [`System.Reactive.Async`](#rxasync)
+* a [V.next.next](#vnextnext-v60) (called either V6.0 or V7.0, TBD) addressing code bloat and related issues experienced by some UI frameworks
+* an initiative to triage the backlog of issues, and determine which issues should be addressed in each of the releases described above
+
+The remainder of this document describes the thinking behind this work plan.
+
 ## Current problems
 
 There are five main problems we want to address.

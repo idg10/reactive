@@ -12,17 +12,17 @@
   <PropertyGroup Condition="$(TargetFramework.StartsWith('net6.0-windows'))">
     <UseWPF>true</UseWPF>
   </PropertyGroup>
-  
+
   <ItemGroup Condition=" '$(TargetFramework)' == 'net472'">
     <Reference Include="WindowsBase" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <Compile Include="..\AssemblyInfo.cs" Link="AssemblyInfo.cs" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\System.Reactive\System.Reactive.csproj" />
   </ItemGroup>
-    
+
 </Project>

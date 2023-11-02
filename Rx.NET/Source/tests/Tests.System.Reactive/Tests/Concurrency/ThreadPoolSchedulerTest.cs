@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT License.
 // See the LICENSE file in the project root for more information. 
 
-#if !NO_THREAD
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,10 +35,10 @@ namespace ReactiveTests.Tests
         [TestMethod]
         public void ScheduleAction()
         {
-            var id = Thread.CurrentThread.ManagedThreadId;
+            var id = Environment.CurrentManagedThreadId;
             var nt = ThreadPoolScheduler.Instance;
             var evt = new ManualResetEvent(false);
-            nt.Schedule(() => { Assert.NotEqual(id, Thread.CurrentThread.ManagedThreadId); evt.Set(); });
+            nt.Schedule(() => { Assert.NotEqual(id, Environment.CurrentManagedThreadId); evt.Set(); });
             evt.WaitOne();
         }
 
@@ -101,37 +100,37 @@ namespace ReactiveTests.Tests
         [TestMethod]
         public void ScheduleActionDueRelative()
         {
-            var id = Thread.CurrentThread.ManagedThreadId;
+            var id = Environment.CurrentManagedThreadId;
             var nt = ThreadPoolScheduler.Instance;
             var evt = new ManualResetEvent(false);
-            nt.Schedule(TimeSpan.FromSeconds(0.2), () => { Assert.NotEqual(id, Thread.CurrentThread.ManagedThreadId); evt.Set(); });
+            nt.Schedule(TimeSpan.FromSeconds(0.2), () => { Assert.NotEqual(id, Environment.CurrentManagedThreadId); evt.Set(); });
             evt.WaitOne();
         }
 
         [TestMethod]
         public void ScheduleActionDue0()
         {
-            var id = Thread.CurrentThread.ManagedThreadId;
+            var id = Environment.CurrentManagedThreadId;
             var nt = ThreadPoolScheduler.Instance;
             var evt = new ManualResetEvent(false);
-            nt.Schedule(TimeSpan.FromTicks(0), () => { Assert.NotEqual(id, Thread.CurrentThread.ManagedThreadId); evt.Set(); });
+            nt.Schedule(TimeSpan.FromTicks(0), () => { Assert.NotEqual(id, Environment.CurrentManagedThreadId); evt.Set(); });
             evt.WaitOne();
         }
 
         [TestMethod]
         public void ScheduleActionDueAbsolute()
         {
-            var id = Thread.CurrentThread.ManagedThreadId;
+            var id = Environment.CurrentManagedThreadId;
             var nt = ThreadPoolScheduler.Instance;
             var evt = new ManualResetEvent(false);
-            nt.Schedule(DateTimeOffset.UtcNow + TimeSpan.FromSeconds(0.2), () => { Assert.NotEqual(id, Thread.CurrentThread.ManagedThreadId); evt.Set(); });
+            nt.Schedule(DateTimeOffset.UtcNow + TimeSpan.FromSeconds(0.2), () => { Assert.NotEqual(id, Environment.CurrentManagedThreadId); evt.Set(); });
             evt.WaitOne();
         }
 
         [TestMethod]
         public void ScheduleActionCancel()
         {
-            var id = Thread.CurrentThread.ManagedThreadId;
+            var id = Environment.CurrentManagedThreadId;
             var nt = ThreadPoolScheduler.Instance;
             var set = false;
             var d = nt.Schedule(TimeSpan.FromSeconds(0.2), () => { Assert.True(false); set = true; });
@@ -142,6 +141,8 @@ namespace ReactiveTests.Tests
 
 #if !NO_PERF
 
+#if !WINDOWS_UWP
+
         [TestMethod]
         public void ScheduleLongRunning_ArgumentChecking()
         {
@@ -151,10 +152,10 @@ namespace ReactiveTests.Tests
         [TestMethod]
         public void ScheduleLongRunning()
         {
-            var id = Thread.CurrentThread.ManagedThreadId;
+            var id = Environment.CurrentManagedThreadId;
             var nt = ThreadPoolScheduler.Instance;
             var evt = new ManualResetEvent(false);
-            nt.ScheduleLongRunning(42, (x, cancel) => { Assert.NotEqual(id, Thread.CurrentThread.ManagedThreadId); evt.Set(); });
+            nt.ScheduleLongRunning(42, (x, cancel) => { Assert.NotEqual(id, Environment.CurrentManagedThreadId); evt.Set(); });
             evt.WaitOne();
         }
 
@@ -188,6 +189,8 @@ namespace ReactiveTests.Tests
             Assert.True(n >= 10);
         }
 
+#endif
+
         [TestMethod]
         public void Stopwatch()
         {
@@ -215,11 +218,15 @@ namespace ReactiveTests.Tests
             Periodic_Impl(TimeSpan.FromMilliseconds(25));
         }
 
+#if !WINDOWS_UWP
+
         [TestMethod]
         public void Periodic_Zero()
         {
             Periodic_Impl(TimeSpan.Zero);
         }
+
+#endif
 
         private void Periodic_Impl(TimeSpan period)
         {
@@ -306,9 +313,8 @@ namespace ReactiveTests.Tests
 #endif
 
 #if DESKTOPCLR
-        // idg10: disabling because it clobbers us right now
         [TestCategory("SkipCI")]
-        //[TestMethod]
+        [TestMethod]
         public void No_ThreadPool_Starvation_Dispose()
         {
             ThreadPool.GetAvailableThreads(out var bwt, out var bio);
@@ -331,4 +337,3 @@ namespace ReactiveTests.Tests
 #endif
     }
 }
-#endif

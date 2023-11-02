@@ -447,7 +447,6 @@ namespace ReactiveTests.Tests
             );
         }
 
-#if !NO_THREAD
         [TestMethod]
         public void Delay_TimeSpan_Real_Simple1()
         {
@@ -459,7 +458,6 @@ namespace ReactiveTests.Tests
         {
             Delay_TimeSpan_Real_Simple1_Impl(ThreadPoolScheduler.Instance);
         }
-#endif
 
         private void Delay_TimeSpan_Real_Simple1_Impl(IScheduler scheduler)
         {
@@ -483,7 +481,6 @@ namespace ReactiveTests.Tests
             Assert.True(new[] { 1, 2, 3 }.SequenceEqual(lst));
         }
 
-#if !NO_THREAD
         [TestMethod]
         public void Delay_TimeSpan_Real_Error1()
         {
@@ -495,7 +492,6 @@ namespace ReactiveTests.Tests
         {
             Delay_TimeSpan_Real_Error1_Impl(ThreadPoolScheduler.Instance);
         }
-#endif
 
         private void Delay_TimeSpan_Real_Error1_Impl(IScheduler scheduler)
         {
@@ -521,7 +517,6 @@ namespace ReactiveTests.Tests
             Assert.Same(ex, err);
         }
 
-#if !NO_THREAD
         [TestMethod]
         public void Delay_TimeSpan_Real_Error2()
         {
@@ -533,7 +528,6 @@ namespace ReactiveTests.Tests
         {
             Delay_TimeSpan_Real_Error2_Impl(ThreadPoolScheduler.Instance);
         }
-#endif
 
         private void Delay_TimeSpan_Real_Error2_Impl(IScheduler scheduler)
         {
@@ -560,7 +554,6 @@ namespace ReactiveTests.Tests
             Assert.Same(ex, err);
         }
 
-#if !NO_THREAD
         [TestMethod]
         public void Delay_TimeSpan_Real_Error3()
         {
@@ -572,7 +565,6 @@ namespace ReactiveTests.Tests
         {
             Delay_TimeSpan_Real_Error3_Impl(ThreadPoolScheduler.Instance);
         }
-#endif
 
         private void Delay_TimeSpan_Real_Error3_Impl(IScheduler scheduler)
         {
@@ -1725,29 +1717,23 @@ namespace ReactiveTests.Tests
 
         private class ImpulseScheduler : IScheduler
         {
-            public DateTimeOffset Now
-            {
-                get { return DateTimeOffset.UtcNow; }
-            }
+            public DateTimeOffset Now => DateTimeOffset.UtcNow;
 
             public IDisposable Schedule<TState>(TState state, Func<IScheduler, TState, IDisposable> action)
             {
                 throw new NotImplementedException();
             }
 
-            private ManualResetEvent _event = new ManualResetEvent(false);
-            private ManualResetEvent _done = new ManualResetEvent(false);
-
-            public ManualResetEvent Event { get { return _event; } }
-            public ManualResetEvent Done { get { return _done; } }
+            public ManualResetEvent Event { get; } = new(false);
+            public ManualResetEvent Done { get; } = new(false);
 
             public IDisposable Schedule<TState>(TState state, TimeSpan dueTime, Func<IScheduler, TState, IDisposable> action)
             {
                 Scheduler.Default.Schedule(() =>
                 {
-                    _event.WaitOne();
+                    Event.WaitOne();
                     action(this, state);
-                    _done.Set();
+                    Done.Set();
                 });
 
                 return Disposable.Empty;
@@ -1784,8 +1770,8 @@ namespace ReactiveTests.Tests
 
         private class MyLongRunning1 : LocalScheduler, ISchedulerLongRunning
         {
-            private ManualResetEvent _start;
-            private ManualResetEvent _stop;
+            private readonly ManualResetEvent _start;
+            private readonly ManualResetEvent _stop;
 
             public MyLongRunning1(ManualResetEvent start, ManualResetEvent stop)
             {
@@ -1841,8 +1827,8 @@ namespace ReactiveTests.Tests
 
         private class MyLongRunning2 : LocalScheduler, ISchedulerLongRunning
         {
-            private ManualResetEvent _start;
-            private ManualResetEvent _stop;
+            private readonly ManualResetEvent _start;
+            private readonly ManualResetEvent _stop;
 
             public MyLongRunning2(ManualResetEvent start, ManualResetEvent stop)
             {

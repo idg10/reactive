@@ -15,7 +15,7 @@
 
   <Properties>
     <DisplayName>Tests.System.Reactive.Uwp.DeviceRunner</DisplayName>
-    <PublisherDisplayName>oren</PublisherDisplayName>
+    <PublisherDisplayName>ian</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

@@ -673,7 +673,6 @@ namespace ReactiveTests.Tests
             );
         }
 
-#if !NO_THREAD
         [TestMethod]
         public void RepeatingTimer_Start_CatchUp()
         {
@@ -733,8 +732,6 @@ namespace ReactiveTests.Tests
 
             Assert.Same(err, ex);
         }
-#endif
-
     }
 
     internal class SchedulerWithCatch : IServiceProvider, IScheduler
@@ -864,7 +861,7 @@ namespace ReactiveTests.Tests
 
         public override bool Equals(object obj)
         {
-            if (!(obj is TimerRun other))
+            if (obj is not TimerRun other)
             {
                 return false;
             }

@@ -25,8 +25,7 @@ namespace Tests.System.Reactive.Tests
             ""
         };
 
-        // Temporarily disabling because this doesn't seem to work in MSTest
-        //[TestMethod]
+        [TestMethod]
         public void ScanFiles()
         {
             var dir = Directory.GetCurrentDirectory();
@@ -42,7 +41,7 @@ namespace Tests.System.Reactive.Tests
 
             if (error.Length != 0)
             {
-                Assert.False(true, $"Files with no license header: {count}\r\n{error.ToString()}");
+                Assert.False(true, $"Files with no license header: {count}\r\n{error}");
             }
         }
 

@@ -1,14 +1,25 @@
 ﻿<Project Sdk="MSBuild.Sdk.Extras">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net472;uap10.0.18362;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net472;uap10.0.18362;net6.0;net6.0-windows10.0.19041</TargetFrameworks>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <PackageTags>Rx;Reactive;Extensions;Observable;LINQ;Events</PackageTags>
     <Description>Reactive Extensions (Rx) for .NET</Description>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net6.0')) or $(TargetFramework.StartsWith('net7.0'))">
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net6.0-windows')) or $(TargetFramework.StartsWith('net7.0-windows'))">
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
 
   <ItemGroup>
     <Compile Remove="Platforms\**\*.*" />
@@ -25,10 +36,6 @@
   </ItemGroup>
 
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="System.Runtime.InteropServices.WindowsRuntime" Version="4.3.0" />
-  </ItemGroup>
-
   <!-- UWP -->
   <ItemGroup Condition=" '$(TargetFramework)' == 'uap10.0' ">
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
@@ -36,15 +43,14 @@
     <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
     <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
   </ItemGroup>
-  <ItemGroup Condition=" $(TargetFramework.StartsWith('uap10.0'))">
+  <ItemGroup Condition=" $(TargetFramework.StartsWith('uap10.0')) or $(TargetFramework.StartsWith('net6.0-windows')) or $(TargetFramework.StartsWith('net7.0-windows'))">
     <Compile Include="Platforms\UWP\**\*.cs" />
     <EmbeddedResource Include="Platforms\UWP\**\*.resx" />
   </ItemGroup>
 
   <!-- Windows includes for Desktop and UWP -->
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' or $(TargetFramework.StartsWith('uap10.0'))">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' or $(TargetFramework.StartsWith('uap10.0')) or $(TargetFramework.StartsWith('net6.0-windows')) or $(TargetFramework.StartsWith('net7.0-windows'))">
     <Compile Include="Platforms\Windows\**\*.cs" />
-    <EmbeddedResource Include="Platforms\Windows\**\*.resx" />
   </ItemGroup>
 
   <!-- Desktop -->
@@ -54,7 +60,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net472'">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' or $(TargetFramework.StartsWith('net6.0-windows')) or $(TargetFramework.StartsWith('net7.0-windows'))">
     <Compile Include="Platforms\Desktop\**\*.cs" />
   </ItemGroup>
 
@@ -149,14 +155,10 @@
     </None>
   </ItemGroup>
 
-  <PropertyGroup>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);RemoveNetCoreApp3FromNuGet</TargetsForTfmSpecificBuildOutput>
-    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);AddNetCore3ToNuGet</TargetsForTfmSpecificContentInPackage>
-  </PropertyGroup>
-
   <ItemGroup>
-    <None Include="build\_._" PackagePath="build\net6.0" Pack="true" />
-    <None Include="build\_._" PackagePath="buildTransitive\net6.0" Pack="true" />
+    <None Include="build\NuGet.Readme.md" Pack="true" PackagePath="\readme.md" />
+    <None Include="build\_._" PackagePath="build\net6.0;build\net6.0-windows10.0.19041" Pack="true" />
+    <None Include="build\_._" PackagePath="buildTransitive\net6.0;buildTransitive\net6.0-windows10.0.19041" Pack="true" />
     <None Include="Linq\QbservableEx.NAry.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

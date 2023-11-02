@@ -13,13 +13,13 @@ using Assert = Xunit.Assert;
 
 namespace ReactiveTests.Tests
 {
-#if !NO_THREAD
     [TestClass]
     public class NewThreadSchedulerTest
     {
         [TestMethod]
         public void NewThread_ArgumentChecking()
         {
+#pragma warning disable CA1806 // (Unused new instance.) We expect the constructor to throw.
             ReactiveAssert.Throws<ArgumentNullException>(() => new NewThreadScheduler(null));
             ReactiveAssert.Throws<ArgumentNullException>(() => NewThreadScheduler.Default.Schedule(42, default));
             ReactiveAssert.Throws<ArgumentNullException>(() => NewThreadScheduler.Default.Schedule(42, DateTimeOffset.Now, default));
@@ -27,6 +27,7 @@ namespace ReactiveTests.Tests
             ReactiveAssert.Throws<ArgumentNullException>(() => NewThreadScheduler.Default.SchedulePeriodic(42, TimeSpan.FromSeconds(1), default));
             ReactiveAssert.Throws<ArgumentNullException>(() => NewThreadScheduler.Default.ScheduleLongRunning(42, default));
             ReactiveAssert.Throws<ArgumentOutOfRangeException>(() => NewThreadScheduler.Default.SchedulePeriodic(42, TimeSpan.FromSeconds(-1), _ => _));
+#pragma warning restore CA1806
         }
 
         [TestMethod]
@@ -35,27 +36,26 @@ namespace ReactiveTests.Tests
             var res = NewThreadScheduler.Default.Now - DateTime.Now;
             Assert.True(res.Seconds < 1);
         }
-#if !NO_THREAD
+
         [TestMethod]
         public void NewThread_ScheduleAction()
         {
-            var id = Thread.CurrentThread.ManagedThreadId;
+            var id = Environment.CurrentManagedThreadId;
             var nt = NewThreadScheduler.Default;
             var evt = new ManualResetEvent(false);
-            nt.Schedule(() => { Assert.NotEqual(id, Thread.CurrentThread.ManagedThreadId); evt.Set(); });
+            nt.Schedule(() => { Assert.NotEqual(id, Environment.CurrentManagedThreadId); evt.Set(); });
             evt.WaitOne();
         }
 
         [TestMethod]
         public void NewThread_ScheduleActionDue()
         {
-            var id = Thread.CurrentThread.ManagedThreadId;
+            var id = Environment.CurrentManagedThreadId;
             var nt = NewThreadScheduler.Default;
             var evt = new ManualResetEvent(false);
-            nt.Schedule(TimeSpan.FromSeconds(0.2), () => { Assert.NotEqual(id, Thread.CurrentThread.ManagedThreadId); evt.Set(); });
+            nt.Schedule(TimeSpan.FromSeconds(0.2), () => { Assert.NotEqual(id, Environment.CurrentManagedThreadId); evt.Set(); });
             evt.WaitOne();
         }
-#endif
 
 #if !NO_PERF
         [TestMethod]
@@ -87,7 +87,6 @@ namespace ReactiveTests.Tests
             d.Dispose();
         }
 
-#if !NO_THREAD
         [TestMethod]
         public void NewThread_Periodic_NonReentrant()
         {
@@ -118,7 +117,5 @@ namespace ReactiveTests.Tests
 
             Assert.False(fail);
         }
-#endif
     }
-#endif
 }

@@ -18,14 +18,11 @@ namespace ReactiveTests.Tests
     [Serializable]
     public class DefaultConcurrencyAbstractionLayerTest
     {
-        private AppDomain _domain;
+        private readonly AppDomain _domain;
 
         public DefaultConcurrencyAbstractionLayerTest()
         {
-            if (_domain == null)
-            {
-                _domain = AppDomain.CreateDomain("Default_CAL", null, new AppDomainSetup { ApplicationBase = AppDomain.CurrentDomain.BaseDirectory });
-            }
+            _domain ??= AppDomain.CreateDomain("Default_CAL", null, new AppDomainSetup { ApplicationBase = AppDomain.CurrentDomain.BaseDirectory });
         }
 
         private void Run(CrossAppDomainDelegate a)
@@ -260,7 +257,6 @@ namespace ReactiveTests.Tests
                 }
 
                 state.Value.Set();
-#if !NO_THREAD
                 var w = new ManualResetEvent(false);
 
                 var d = slr.ScheduleLongRunning(cancel =>
@@ -276,9 +272,6 @@ namespace ReactiveTests.Tests
                 Thread.Sleep(50);
                 d.Dispose();
                 w.WaitOne();
-#else
-                state.Value.Set();
-#endif
             });
 
             e.Value.WaitOne();

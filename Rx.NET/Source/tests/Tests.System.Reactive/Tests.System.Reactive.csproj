@@ -1,8 +1,7 @@
-﻿<Project>
+﻿<Project Sdk="MSBuild.Sdk.Extras">
 
-  <Import Project="Sdk.props" Sdk="MSBuild.Sdk.Extras" />
   <PropertyGroup>
-    <TargetFrameworks>net472;net6.0;net6.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFrameworks>net472;net6.0;net7.0;net6.0-windows10.0.19041</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
@@ -29,7 +28,7 @@
     Before that PR was merged, the test runner wouldn't work if the host specified a TFM with a
     specific Windows version.
 -->
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.0.2" />
     <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
     <PackageReference Include="xunit.assert" Version="2.4.2" />
@@ -47,11 +46,9 @@
   Should be != 'net6.0' but trying to diagnose failures in net6.0-windows.
   Testing the hypothesis that the difference is something to do with the set of projects referenced. Doesn't seem to change anything though.
   -->
-  <ItemGroup Condition="'$(TargetFramework)' != 'net6.0'">
+  <ItemGroup Condition="('$(TargetFramework)' != 'net6.0') and ('$(TargetFramework)' != 'net7.0')">
     <ProjectReference Include="..\..\src\System.Reactive.Windows.Threading\System.Reactive.Windows.Threading.csproj" />
   </ItemGroup>
-
-  <Import Project="Sdk.targets" Sdk="MSBuild.Sdk.Extras" />
 
   <PropertyGroup Condition="$(TargetFramework.StartsWith('net6.0-windows'))">
     <!--

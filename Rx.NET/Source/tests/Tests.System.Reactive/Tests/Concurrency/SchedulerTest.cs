@@ -220,14 +220,12 @@ namespace ReactiveTests.Tests
                 e.WaitOne();
             }
 
-#if !NO_THREAD
             // NewThread
             {
                 var e = new ManualResetEvent(false);
                 Scheduler.NewThread.Schedule(() => e.Set());
                 e.WaitOne();
             }
-#endif
 
             // TaskPool
             {
@@ -243,7 +241,7 @@ namespace ReactiveTests.Tests
 
 #if !NO_PERF
 
-#if !WINDOWS && !NO_THREAD
+#if !WINDOWS
         [TestMethod]
         public void Scheduler_LongRunning_ArgumentChecking()
         {
@@ -336,7 +334,7 @@ namespace ReactiveTests.Tests
 
 #if !NO_PERF
 
-#if !WINDOWS && !NO_THREAD
+#if !WINDOWS
         [TestMethod]
         public void Scheduler_Periodic1()
         {
@@ -482,7 +480,7 @@ namespace ReactiveTests.Tests
         {
             ReactiveAssert.Throws<ArgumentNullException>(() => Scheduler.DisableOptimizations(default));
             ReactiveAssert.Throws<ArgumentNullException>(() => Scheduler.DisableOptimizations(default, new Type[0]));
-#if !WINDOWS && !NO_THREAD
+#if !WINDOWS
             ReactiveAssert.Throws<ArgumentNullException>(() => Scheduler.DisableOptimizations(ThreadPoolScheduler.Instance, default));
 #endif
             ReactiveAssert.Throws<ArgumentNullException>(() => Scheduler.DisableOptimizations(Scheduler.Default).Schedule(42, default));
@@ -1368,19 +1366,21 @@ namespace ReactiveTests.Tests
 
             var o = s.CreateObserver<int>();
 
-            s.ScheduleAsync(async (_, ct) =>
+            s.ScheduleAsync(async (scheduler, _) =>
             {
                 o.OnNext(42);
 
-                await _.Yield();
+#pragma warning disable CA2016 // (Forward CancellationToken.) We are testing the methods that don't take a CancellationToken here
+                await scheduler.Yield();
 
                 o.OnNext(43);
 
-                await _.Sleep(TimeSpan.FromTicks(10));
+                await scheduler.Sleep(TimeSpan.FromTicks(10));
 
                 o.OnNext(44);
 
-                await _.Sleep(new DateTimeOffset(250, TimeSpan.Zero));
+                await scheduler.Sleep(new DateTimeOffset(250, TimeSpan.Zero));
+#pragma warning restore CA2016
 
                 o.OnNext(45);
             });
@@ -1402,19 +1402,19 @@ namespace ReactiveTests.Tests
 
             var o = s.CreateObserver<int>();
 
-            s.ScheduleAsync(async (_, ct) =>
+            s.ScheduleAsync(async (scheduler, ct) =>
             {
                 o.OnNext(42);
 
-                await _.Yield(ct);
+                await scheduler.Yield(ct);
 
                 o.OnNext(43);
 
-                await _.Sleep(TimeSpan.FromTicks(10), ct);
+                await scheduler.Sleep(TimeSpan.FromTicks(10), ct);
 
                 o.OnNext(44);
 
-                await _.Sleep(new DateTimeOffset(250, TimeSpan.Zero), ct);
+                await scheduler.Sleep(new DateTimeOffset(250, TimeSpan.Zero), ct);
 
                 o.OnNext(45);
             });
@@ -1504,8 +1504,6 @@ namespace ReactiveTests.Tests
             e.WaitOne();
         }
 
-#if !NO_SYNCCTX
-
         [TestMethod]
         public void SchedulerAsync_ScheduleAsync_SyncCtx()
         {
@@ -1567,8 +1565,5 @@ namespace ReactiveTests.Tests
                 d(state);
             }
         }
-
-#endif
-
     }
 }

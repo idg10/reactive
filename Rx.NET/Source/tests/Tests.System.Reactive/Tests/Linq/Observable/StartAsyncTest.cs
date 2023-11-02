@@ -7,10 +7,14 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Reactive.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+using Tests.System.Reactive;
 
 using Assert = Xunit.Assert;
 
@@ -42,8 +46,8 @@ namespace ReactiveTests.Tests
             ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(default(Func<Task<int>>), s));
             ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(default(Func<CancellationToken, Task<int>>), s));
 
-            ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(() => _doneTask, default));
-            ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(ct => _doneTask, default));
+            ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(() => _doneTask, default(IScheduler)));
+            ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(ct => _doneTask, default(IScheduler)));
         }
 
         [TestMethod]
@@ -182,6 +186,94 @@ namespace ReactiveTests.Tests
             }
         }
 
+        [TestMethod]
+        public void Start_Func_UnsubscribeThenError_ErrorReportedAsUnobserved()
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(createTask),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_FuncWithCancel_UnsubscribeThenError_ErrorReportedAsUnobserved()
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(_ => createTask()),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_Func_WithScheduler_UnsubscribeThenError_ErrorReportedAsUnobserved()
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(createTask, TaskPoolScheduler.Default),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_FuncWithCancel_WithScheduler_UnsubscribeThenError_ErrorReportedAsUnobserved()
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(_ => createTask(), TaskPoolScheduler.Default),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_Func_IgnorePostUnsubscribeErrors_UnsubscribeThenError_ErrorNotReportedAsUnobserved()
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(createTask, new TaskObservationOptions(null, ignoreExceptionsAfterUnsubscribe: true)),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionNotReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_FuncWithCancel_IgnorePostUnsubscribeErrors_UnsubscribeThenError_ErrorNotReportedAsUnobserved()
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(_ => createTask(), new TaskObservationOptions(null, ignoreExceptionsAfterUnsubscribe: true)),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionNotReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_Func_WithScheduler_IgnorePostUnsubscribeErrors_UnsubscribeThenError_ErrorNotReportedAsUnobserved()
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(createTask, new TaskObservationOptions(TaskPoolScheduler.Default, ignoreExceptionsAfterUnsubscribe: true)),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionNotReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_FuncWithCancel_WithScheduler_IgnorePostUnsubscribeErrors_UnsubscribeThenError_ErrorNotReportedAsUnobserved()
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(_ => createTask(), new TaskObservationOptions(TaskPoolScheduler.Default, ignoreExceptionsAfterUnsubscribe: true)),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionNotReportedAsUnobserved();
+                });
+        }
+
 #if DESKTOPCLR
         [TestMethod]
         public void StartAsync_Func_Scheduler1()
@@ -196,7 +288,7 @@ namespace ReactiveTests.Tests
             xs.Subscribe(res =>
             {
                 x = res;
-                t = Thread.CurrentThread.ManagedThreadId;
+                t = Environment.CurrentManagedThreadId;
                 e.Set();
             });
 
@@ -205,7 +297,7 @@ namespace ReactiveTests.Tests
             e.WaitOne();
 
             Assert.Equal(42, x);
-            Assert.Equal(Thread.CurrentThread.ManagedThreadId, t);
+            Assert.Equal(Environment.CurrentManagedThreadId, t);
         }
 
         [TestMethod]
@@ -221,7 +313,7 @@ namespace ReactiveTests.Tests
             xs.Subscribe(res =>
             {
                 x = res;
-                t = Thread.CurrentThread.ManagedThreadId;
+                t = Environment.CurrentManagedThreadId;
                 e.Set();
             });
 
@@ -230,7 +322,7 @@ namespace ReactiveTests.Tests
             e.WaitOne();
 
             Assert.Equal(42, x);
-            Assert.Equal(Thread.CurrentThread.ManagedThreadId, t);
+            Assert.Equal(Environment.CurrentManagedThreadId, t);
         }
 #endif
 
@@ -248,8 +340,8 @@ namespace ReactiveTests.Tests
 
             ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(default(Func<Task>), s));
             ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(default(Func<CancellationToken, Task>), s));
-            ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(() => (Task)_doneTask, default));
-            ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(ct => (Task)_doneTask, default));
+            ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(() => (Task)_doneTask, default(IScheduler)));
+            ReactiveAssert.Throws<ArgumentNullException>(() => Observable.StartAsync(ct => (Task)_doneTask, default(IScheduler)));
         }
 
         [TestMethod]
@@ -301,7 +393,7 @@ namespace ReactiveTests.Tests
             var xs = Observable.StartAsync(ct =>
             {
                 i++;
-                return Task.Factory.StartNew(() => { });
+                return Task.Factory.StartNew(() => { }, CancellationToken.None); // Not forwarding ct because we always want this task to run to completion in this test.
             });
 
             Assert.Equal(Unit.Default, xs.Single());
@@ -330,7 +422,7 @@ namespace ReactiveTests.Tests
             var ex = new Exception();
 
             var xs = Observable.StartAsync(ct =>
-                Task.Factory.StartNew(() => { throw ex; })
+                Task.Factory.StartNew(() => { throw ex; }, CancellationToken.None) // Not forwarding ct because we always want this task to run and then fail in this test
             );
 
             ReactiveAssert.Throws(ex, () => xs.Single());
@@ -362,7 +454,8 @@ namespace ReactiveTests.Tests
                         {
                             f.Set();
                         }
-                    })
+                    },
+                    CancellationToken.None) // Not forwarding ct because we are testing the case where the task is already running by the time cancellation is detected
                 );
 
                 e.WaitOne();
@@ -380,6 +473,94 @@ namespace ReactiveTests.Tests
             }
         }
 
+        [TestMethod]
+        public void Start_Action_UnsubscribeThenError_ErrorReportedAsUnobserved()
+        {
+            Start_Action_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(createTask),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_ActionWithCancel_UnsubscribeThenError_ErrorReportedAsUnobserved()
+        {
+            Start_Action_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(_ => createTask()),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_Action_WithScheduler_UnsubscribeThenError_ErrorReportedAsUnobserved()
+        {
+            Start_Action_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(createTask, TaskPoolScheduler.Default),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_ActionWithCancel_WithScheduler_UnsubscribeThenError_ErrorReportedAsUnobserved()
+        {
+            Start_Action_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(_ => createTask(), TaskPoolScheduler.Default),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_Action_IgnorePostUnsubscribeErrors_UnsubscribeThenError_ErrorNotReportedAsUnobserved()
+        {
+            Start_Action_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(createTask, new TaskObservationOptions(null, ignoreExceptionsAfterUnsubscribe: true)),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionNotReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_ActionWithCancel_IgnorePostUnsubscribeErrors_UnsubscribeThenError_ErrorNotReportedAsUnobserved()
+        {
+            Start_Action_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(_ => createTask(), new TaskObservationOptions(null, ignoreExceptionsAfterUnsubscribe: true)),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionNotReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_Action_WithScheduler_IgnorePostUnsubscribeErrors_UnsubscribeThenError_ErrorNotReportedAsUnobserved()
+        {
+            Start_Action_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(createTask, new TaskObservationOptions(TaskPoolScheduler.Default, ignoreExceptionsAfterUnsubscribe: true)),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionNotReportedAsUnobserved();
+                });
+        }
+
+        [TestMethod]
+        public void Start_ActionWithCancel_WithScheduler_IgnorePostUnsubscribeErrors_UnsubscribeThenError_ErrorNotReportedAsUnobserved()
+        {
+            Start_Action_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+                createTask => Observable.StartAsync(_ => createTask(), new TaskObservationOptions(TaskPoolScheduler.Default, ignoreExceptionsAfterUnsubscribe: true)),
+                errorObservation =>
+                {
+                    errorObservation.AssertExceptionNotReportedAsUnobserved();
+                });
+        }
+
 #if DESKTOPCLR
         [TestMethod]
         public void StartAsync_Action_Scheduler1()
@@ -392,7 +573,7 @@ namespace ReactiveTests.Tests
             var xs = Observable.StartAsync(() => (Task)tcs.Task, Scheduler.Immediate);
             xs.Subscribe(res =>
             {
-                t = Thread.CurrentThread.ManagedThreadId;
+                t = Environment.CurrentManagedThreadId;
                 e.Set();
             });
 
@@ -400,7 +581,7 @@ namespace ReactiveTests.Tests
 
             e.WaitOne();
 
-            Assert.Equal(Thread.CurrentThread.ManagedThreadId, t);
+            Assert.Equal(Environment.CurrentManagedThreadId, t);
         }
 
         [TestMethod]
@@ -414,7 +595,7 @@ namespace ReactiveTests.Tests
             var xs = Observable.StartAsync(ct => (Task)tcs.Task, Scheduler.Immediate);
             xs.Subscribe(res =>
             {
-                t = Thread.CurrentThread.ManagedThreadId;
+                t = Environment.CurrentManagedThreadId;
                 e.Set();
             });
 
@@ -422,11 +603,56 @@ namespace ReactiveTests.Tests
 
             e.WaitOne();
 
-            Assert.Equal(Thread.CurrentThread.ManagedThreadId, t);
+            Assert.Equal(Environment.CurrentManagedThreadId, t);
         }
 #endif
 
         #endregion
 
+        private void Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+            Func<Func<Task<int>>, IObservable<int>> createObservable,
+            Action<TaskErrorObservation> testResults)
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core<int>(createObservable, testResults);
+        }
+
+        private void Start_Action_ErrorAfterUnsubscribeReportedAsUnobserved_Core(
+            Func<Func<Task>, IObservable<Unit>> createObservable,
+            Action<TaskErrorObservation> testResults)
+        {
+            Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core<Unit>(createObservable, testResults);
+        }
+
+        private void Start_Func_ErrorAfterUnsubscribeReportedAsUnobserved_Core<T>(
+            Func<Func<Task<T>>, IObservable<T>> createObservable,
+            Action<TaskErrorObservation> testResults)
+        {
+            using Barrier gate = new(2);
+            using TaskErrorObservation errorObservation = new();
+
+            var sub = errorObservation.SuscribeWithoutKeepingSourceReachable<T>(
+                (setTask, exception) => createObservable(
+                    () => setTask(Task.Factory.StartNew<T>(
+                        () =>
+                        {
+                            // 1: Notify that task execution has begun
+                            gate.SignalAndWait();
+                            // 2: Wait until unsubscribe Dispose has returned
+                            gate.SignalAndWait();
+                            throw exception;
+                        })))
+                    .Subscribe());
+
+            // 1: wait until task execution has begun
+            gate.SignalAndWait();
+
+            sub.Dispose();
+            //sub = null;
+
+            // 2: Notify that unsubscribe Dispose has returned
+            gate.SignalAndWait();
+
+            testResults(errorObservation);
+        }
     }
 }

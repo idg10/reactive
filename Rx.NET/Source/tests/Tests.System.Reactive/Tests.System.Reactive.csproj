@@ -36,4 +36,31 @@
     <ProjectReference Include="..\..\src\System.Reactive.Observable.Aliases\System.Reactive.Observable.Aliases.csproj" />
     <ProjectReference Include="..\..\src\Microsoft.Reactive.Testing\Microsoft.Reactive.Testing.csproj" />
   </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net6.0-windows')) or '$(TargetFramework)' == 'net472'">
+  <!--<ItemGroup Condition="'$(TargetFramework)' == 'net472'">-->
+    <ProjectReference Include="..\..\src\System.Reactive.Windows.Forms\System.Reactive.Windows.Forms.csproj" />
+  </ItemGroup>
+
+  <!--
+  Should be != 'net6.0' but trying to diagnose failures in net6.0-windows.
+  Testing the hypothesis that the difference is something to do with the set of projects referenced. Doesn't seem to change anything though.
+  -->
+  <ItemGroup Condition="('$(TargetFramework)' != 'net6.0') and ('$(TargetFramework)' != 'net7.0')">
+    <ProjectReference Include="..\..\src\System.Reactive.Windows.Threading\System.Reactive.Windows.Threading.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net6.0-windows'))">
+    <!--
+    net6.0 ends up with:
+    TRACE;DEBUG;NET;NET6_0;NETCOREAPP
+
+    net6.0-windows ends up with
+    TRACE;HAS_WINRT;HAS_WINFORMS;HAS_WPF;HAS_DISPATCHER;DESKTOPCLR;WINDOWS;CSWINRT;DEBUG;NET;NET6_0;NETCOREAPP
+
+    -->
+
+    <!--<DefineConstants>TRACE;DEBUG;NET;NET6_0;NETCOREAPP</DefineConstants>-->
+  </PropertyGroup>
+
 </Project>

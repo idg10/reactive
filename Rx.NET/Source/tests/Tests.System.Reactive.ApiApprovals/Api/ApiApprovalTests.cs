@@ -40,6 +40,20 @@ namespace ReactiveTests.Tests.Api
         }
 
         [Fact]
+        public Task WindowsForms()
+        {
+            var publicApi = GeneratePublicApi(typeof(System.Reactive.Concurrency.ControlScheduler).Assembly);
+            return Verify(publicApi, "cs");
+        }
+
+        [Fact]
+        public Task Wpf()
+        {
+            var publicApi = GeneratePublicApi(typeof(System.Reactive.Concurrency.DispatcherScheduler).Assembly);
+            return Verify(publicApi, "cs");
+        }
+
+        [Fact]
         public Task Testing()
         {
             var publicApi = GeneratePublicApi(typeof(Microsoft.Reactive.Testing.TestScheduler).Assembly);

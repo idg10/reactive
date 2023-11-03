@@ -94,6 +94,7 @@ namespace ReactiveTests.Tests
 
             Assert.False(fail);
         }
+
 #if DESKTOPCLR
         [TestCategory("SkipCI")]
         [TestMethod]

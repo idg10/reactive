@@ -48,7 +48,7 @@ There was a major change in v4. Superficially, this seemed to "just" merge all t
 
 ### History behind the decision to unify `System.Reactive` in v4
 
-In v3, the core components contained both `net40` and `net45` targets. This could create an interesting problem in .NET applications that offered a plug-in model (e.g., Visual Studio extensions) reported in [issue #97](https://github.com/dotnet/reactive/issues/97). Imagine two plug-ins:
+In v2, the core components contained both `net40` and `net45` targets. This could create an interesting problem in .NET applications that offered a plug-in model (e.g., Visual Studio extensions) reported in [issue #97](https://github.com/dotnet/reactive/issues/97). Imagine two plug-ins:
 
 * Plug-in A
   * Targets .NET Framework 4.0
@@ -67,7 +67,7 @@ Now suppose the host loads Plug-in B. It will also want to load `System.Reactive
 
 This tends not to be an issue with modern versions of .NET because we have [`AssemblyLoadContext`]([https://learn.microsoft.com/en-us/dotnet/core/dependency-loading/understanding-assemblyloadcontext) to solve this very problem. But with .NET Framework, this was a serious problem for plug-in hosts. There are some important plug-in hosting apps that still use .NET Framework (notably Visual Studio) so this problem hasn't gone away.
 
-In 2016, Rx attempted to address this in [PR #212](https://github.com/dotnet/reactive/pull/212) by giving a slightly different version number to each target. For example, the `net45` DLL had version 3.0.1000.0, while the `net451` DLL was 3.0.2000.0, and so on. This plan is described in [issue #205](https://github.com/dotnet/reactive/issues/205).
+In 2016, Rx v3.0 attempted to address this in [PR #212](https://github.com/dotnet/reactive/pull/212) by giving a slightly different version number to each target. For example, the `net45` DLL had version 3.0.1000.0, while the `net451` DLL was 3.0.2000.0, and so on. This plan is described in [issue #205](https://github.com/dotnet/reactive/issues/205).
 
 At the time this was proposed, it was [acknowledged](https://github.com/dotnet/reactive/issues/205#issuecomment-228577028) that there was a potential problem with binding redirects. Binding redirects often specify version ranges, which means if you upgrade 3.x to 4.x, it's possible that 3.0.2000.0 would get upgraded to 4.0.1000.0, which could actually mean a downgrade in surface area (because the x.x.2000.0 versions might have target-specific functionality that the x.x.2000.0 versions do not).
 
@@ -82,13 +82,13 @@ To recap, there are two particularly significant factors that led to the decisio
 * There were builds for multiple .NET 4.x frameworks
 * The `AssemblyLoadContext` was unavailable
 
-The problem with .NET 4.x is that any component built for any .NET 4.x target could also end up loading on a later version of .NET 4.x (e.g., a `net40` component could load on `net462`) and once that happens in some process, that process will no longer be able to load a different file that is nominally the same version of the same component but which targets a newer framework. (E.g., once .NET 4.8 has loaded the `net40` build of some component, then it won't be able to go on to load the `net48` version of the same component.)
+The problem with .NET 4.x is that any component built for any .NET 4.x target could also end up loading on a later version of .NET 4.x (e.g., a `net40` component could load on `net462`) and once that happens in some process, that process will no longer be able to load a different file that is nominally the same version of the same component but which targets a newer framework. (E.g., once .NET 4.8 has loaded the `net40` build of some particular version of some component, then it won't be able to go on to load the `net48` version of the same nominal version of that component.) **Note**: this is only a problem when two plug-ins want the same nominal version of Rx but different targets. .NET Framework is perfectly capable of loading two completely different versions of Rx. (If two plug-ins depend on Rx 5.0 and Rx 6.0, then both the 5.0 and 6.0 versions of Rx can be loaded into the same process, the same AppDomain even. Assembly binding redirects could force both components onto a newer version, but there's no situation in which loading a plug-in with a dependency on an older version of Rx before loading one with a dependency on a newer version will cause that second plug-in to be unable to load. The v2 era problems only arose when both plug-ins wanted the same version of Rx but were targeting different versions of .NET Framework.)
 
-But if you look at Rx 6.0 (the current version in 2023) we now build only a single .NET Framework target, `net472`. So perhaps this problem has gone away, and perhaps we can unwind the decisions that led to the current design.
+But if you look at Rx 6.0 (the current version in 2023) we now build only a single .NET Framework target, `net472`. It seems that this original problem has gone away, so perhaps we can unwind the decisions that led to the current design.
 
-A possible fly in the ointment is the `netstandard2.0` component, though. We could still end up with that loading first, blocking any attempt to load the `net472` version some time later. However, in the plug-ins scenario above, that shouldn't happen. The build processes for the individual plug-ins know they are targeting .NET Framework, so they should prefer the `net472` version over the `netstandard2.0` one. (If they target an older version such as `net462`, then perhaps they would pick `netstandard2.0` instead. But then the current Rx 6.0 design fails in that scenario too. So unwinding the earlier design decisions won't make things any worse than they already are.)
+A possible fly in the ointment is the `netstandard2.0` component, because that could in principle run in a .NET Framework process. We could still end up with that loading first, blocking any attempt to load the `net472` version some time later. However, in the plug-ins scenario above, that shouldn't happen. The build processes for the individual plug-ins know they are targeting .NET Framework, so they should prefer the `net472` version over the `netstandard2.0` one. (If they target an older version such as `net462`, then perhaps they would pick `netstandard2.0` instead. But then the current Rx 6.0 design fails in that scenario too. So unwinding the earlier design decisions won't make things any worse than they already are.)
 
-Another consideration it that modern NuGet tooling is better than it was in 2016 when the current design was established. Alternative solutions might be possible now that would not have worked when Rx 4.0 was introduced.
+Another consideration is that modern NuGet tooling is better than it was in 2016 when the current design was established. Alternative solutions might be possible now that would not have worked when Rx 4.0 was introduced.
 
 When it comes to .NET 6.0 and later, these problems should a non-issue because better plug-in architectures exist thanks to `AssemblyLoadContext`.
 
@@ -96,11 +96,12 @@ So for all these reasons, while the current design might have been the best opti
 
 ### The problems that any new solution has to solve
 
-To be able to evaluate potential design changes, we need to understand the problems that any solution must solve. There are the original two problems that motivated the current design, and the newer problems that only occurred with more recent frameworks.
+To be able to evaluate potential design changes, we need to understand the problems that any solution must solve. There are the original two problems that motivated the current design, and the newer problems that only occurred with more recent frameworks. And there is also a backwards compatibility constraint.
 
-1. Host applications with a plug-in model getting into a state where plug-ins disagree about which `System.Reactive.dll` is loaded
+1. Host applications with a plug-in model getting into a state where plug-ins disagree about which `System.Reactive.dll` is loaded for a particular version of Rx (i.e., when there are multiple candidate targets)
 2. Incompatible mixes of version numbers of Rx components
 3. Applications getting WPF and Windows Forms dependencies even though they use neither of these frameworks.
+4. Components that have a dependency on Rx 5.0 or 6.0 running in an application that upgrades that to Rx 7.0 (they must not be broken by this upgrade).
 
 It's worth re-iterating that 1 is a non-issue on .NET 6.0+ hosts. Applications hosting plug-ins on those runtimes will use `AssemblyLoadContext`, enabling each plug-in to make its own decisions about which components. If plug-ins make conflicting decisions, it doesn't matter, because `AssemblyLoadContext` is designed to allow that.
 
@@ -108,9 +109,45 @@ Rx 3.0 solved 1 by using different 'build numbers' (the 3rd part of the assembly
 
 It's worth noting that problem 2 goes away if you use the modern project system. The problem described in [#305](https://github.com/dotnet/reactive/issues/305) occurs only with the old `packages.config` system. If you try to reproduce the problem in a project that uses the [.NET SDK](https://learn.microsoft.com/en-us/dotnet/core/project-sdk/overview) project system introduced back in MSBuild 15 (Visual Studio 2017), the problem won't occur. Visual Studio 2017 is the oldest version of Visual Studio with mainstream support.
 
-Rx 4.0 solved 2 (and Rx 6.0 uses the same approach) by collapsing everything down to a single NuGet package, `System.Reactive`. To access UI-framework-specific functionality, you no long needed to add a reference to a UI-framework-specific package such as `System.Reactive.Windows.Forms`. From a developer's perspective, the functionality was right there in `System.Reactive`. The exact API surface area you saw was determined by your target platform. If you built a UWP application, you would get the `lib\uap10.0.16299\System.Reactive.dll` which had the UWP-specific dispatcher support built in. If your application was built for `net6.0-windows10.0.19041` (or a .NET 6.0 TFM specifying a later Windows SDK) you would get `lib\net6.0-windows10.0.19041\System.Reactive.dll` which has the Windows Forms and WPF dispatcher and related types build in. If your target was `net471` or a later .NET Framework you would get `lib\net472\System.Reactive.dll`, which also included the Windows Forms and WPF dispatcher support (but built for .NET Framework, instead of .NET 6.0). And if you weren't using any client-side UI framework, then the behaviour depended on whether you were using .NET Framework, or .NET 6.0+. With .NET Framework you'd get the `net471` DLL, which would include the WPF and Windows Forms support, but it didn't really matter because those frameworks were present as part of any .NET Framework installation. And if you target .NET 6.0 you'll get the `lib\net6.0\System.Reactive.dll`, which has no UI framework support, but that's fine because any .NET 6.0+ TFM that doesn't mention 'windows' doesn't offer either WPF or Windows Forms.
+Rx 4.0 solved 2 (and Rx 6.0 uses the same approach) by collapsing everything down to a single NuGet package, `System.Reactive`. To access UI-framework-specific functionality, you no long needed to add a reference to a UI-framework-specific package such as `System.Reactive.Windows.Forms`. From a developer's perspective, the functionality was right there in `System.Reactive`. The exact API surface area you saw was determined by your target platform. If you built a UWP application, you would get the `lib\uap10.0.16299\System.Reactive.dll` which had the UWP-specific dispatcher support built in. If your application was built for `net6.0-windows10.0.19041` (or a .NET 6.0 TFM specifying a later Windows SDK) you would get `lib\net6.0-windows10.0.19041\System.Reactive.dll` which has the Windows Forms and WPF dispatcher and related types build in. If your target was `net472` or a later .NET Framework you would get `lib\net472\System.Reactive.dll`, which also included the Windows Forms and WPF dispatcher support (but built for .NET Framework, instead of .NET 6.0). And if you weren't using any client-side UI framework, then the behaviour depended on whether you were using .NET Framework, or .NET 6.0+. With .NET Framework you'd get the `net472` DLL, which would include the WPF and Windows Forms support, but it didn't really matter because those frameworks were present as part of any .NET Framework installation. And if you target .NET 6.0 you'll get the `lib\net6.0\System.Reactive.dll`, which has no UI framework support, but that's fine because any .NET 6.0+ TFM that doesn't mention 'windows' doesn't offer either WPF or Windows Forms.
 
-Rx 4.0, 5.0, and 6.0 don't have a solution to 3. Initially they didn't need one—in the scenarios where you got WPF and Windows Forms support without really needing it, it was of little consequence. If you were running on .NET Framework, those frameworks were pre-installed. And at the time, if your target was `net6.0-windowsXX` it was almost invariably because you were building a WPF or Windows Forms app. However, two important things have changed in recent years: 1) there are now a lot of other UI frameworks besides WPF and Windows Forms, and 2) it's now common to produce some sort of self-contained deployment for client-side apps, at which point dragging along copies of both WPF and Windows Forms when you are using neither makes applications far larger than they should be.
+Rx 4.0, 5.0, and 6.0 don't have a solution to 3. Initially they didn't need one—in the scenarios where you got WPF and Windows Forms support without really needing it, it was of little consequence. If you were running on .NET Framework, those frameworks were pre-installed, so there was no cost to having a dependency on them. And at the time, if your target was `netcoreapp3.1-windowsXX` it was almost invariably because you were building a WPF or Windows Forms app. However, two important things have changed in recent years: 1) there are now a lot of other UI frameworks besides WPF and Windows Forms, and 2) it's now common to produce some sort of self-contained deployment for client-side apps, at which point dragging along copies of both WPF and Windows Forms when you are using neither makes applications far larger than they should be.
+
+### Types in `System.Reactive` that are partially or completely UI-framework-specific
+
+Unwinding the consolidation that happened in V4 comes with a challenge: `System.Reactive` now has a slightly different API surface area on different platforms. There are some types available only on specific targets. There is one type that is available on all targets but has a slightly different public API on one target. And there are some types with the same API surface area on all targets but with differences in behavior. This section describes the afflicted API surface area.
+
+Types available only in specific targets:
+
+* `net472`
+  * `RemotingObservable`
+* `net6.0-windows` and `net472`
+  * `DispatcherScheduler`
+  * `DispatcherObservable`
+* `net6.0-windows*` and UWP
+  * `CoreDispatcherScheduler`
+  * `CoreDispatcherObservable`
+  * Windows Foundation Event Handler support:
+    * `IEventPatternSource<TSender, TEventArgs>`
+    * `EventPatternSource<TSender, TEventArgs>`
+    * `WindowsObservable` (see also async operations)
+  * Adaptation between `IObservable<T>` and WinRT's async actions/operations/progress:
+    * `AsyncInfoObservableExtensions`
+    * `AsyncInfoObservable`
+    * `WindowsObservable` (see also Windows Foundation Event Handler support)
+
+Types that are in all targets, but which contain UI-frameworks specific public members in relevant targets:
+
+* UWP
+  * `ThreadPoolScheduler` has different implementation based on UWP thread pool and provides support for `WorkItemPriority` (a UWPism)
+
+Behavior that is different across platforms:
+
+* UWP
+  * `Scheduler` periodic scheduling has workaround for WinRT not supporting &lt;1ms resolution
+* `net6.0-windows*` and UWP
+  * `IHostLifecycleNotifications` service available from enlightenment provider
+  * Periodic scheduling will be aware of windows suspend/resume events only if using `System.Reactive` for these targets
 
 
 ### Design options
@@ -125,39 +162,37 @@ With that in mind, let's now consider some possible choices.
 
 #### Option 1
 
-* A `System.Reactive.Core` component (comprising interface definitions, common implementation details, and LINQ implementation) with netstandard2.0, .net6.0 and uap10 (no net472)
-* A `System.Reactive`` component where platform-specific targets (net472, .net6.0, uap10) supply enlightenments (e.g., via a `System.Reactive.PlatformServices` component like we used to have)
-* UI-framework-specific Rx types (e.g, `ControlDispatcher`, and `ControlObservable`) are supplied in per-framework components (e.g., `System.Reactive.Windows.Forms`, `System.Reactive.Maui`, `System.Reactive.Wpf`; the old multi-platform `System.Reactive.Windows.Threading` would exist for backcompat, but would just contain type forwarders)
-* No version number adjustment—assemblies are all version 6.0.0.0 (or 7.0.0.0, etc.)
+* A `System.Reactive.Core` component (comprising the common public API, and common implementation details) with netstandard2.0, and .net6.0 (no `net472`, `uap10*`, or `*-windows` targets)
+* UI-framework-specific components defining Rx types (e.g, `ControlDispatcher`, and `ControlObservable`) are supplied in per-framework components (e.g., `System.Reactive.Windows.Forms`, `System.Reactive.Maui`, `System.Reactive.Wpf`; the old multi-platform `System.Reactive.Windows.Threading` would exist for backcompat, but would just contain type forwarders); a new `UwpThreadPoolScheduler` would be made available for the UWP-specific version of the thread pool scheduler
+* `System.Reactive` is deprecated, and retained only for backwards compatibility; it remains a component with platform-specific targets (net472, .net6.0 (with and without `-windows`), uap10) and also `netstandard2.0` and it just provides type forwarders for the entire V6 public surface area
+* No version number adjustment within Rx versions—assemblies are all version 7.0.0.0 in Rx 7.0 (or 8.0.0.0 in Rx 8.0, etc.)
 
-(TBD: it's not entirely clear whether we really need a `uap10` version of the core parts. If it turns out the `netstandard2.0` target would work on that, perhaps suitably enlightened by `System.Reactive.PlatformServices`, then `System.Reactive.Core` would target just `netstandard2.0` and `net6.0`. The reason I'm doubtful is that some supposedly-`netstandard2.0`-capable runtimes don't really support it properly. We need to work out whether `uap10` is one of those.)
+Let's address the elephant in the room: this is almost exactly the design we had back in Rx v2.0. (The differences are that some older UI frameworks have gone away, and in this design, instead of having the strange "UI-framework-specific APIs for several, but not all UI frameworks" package known as `System.Reactive.Windows.Threading`, we move to a strict "one package per UI framework" model.) We know this didn't work in 2016, so why would we move back to it?
 
-Let's address the elephant in the room: this is almost exactly the design we had back in Rx v3.0. (The differences are that there's now a longer list of UI frameworks, and instead of having the strange "UI-framework-specific APIs for several, but not all UI frameworks" package known as `System.Reactive.Windows.Threading`, we move to a strict "one package per UI framework" model.) We know this didn't work in 2016, so why would we move back to it?
-
-Well a lot of things have changed since 2016. So let's look at the three problems it needs to solve.
+Well a lot of things have changed since 2016. So let's look at the four problems it needs to solve.
 
 **1: Host applications with a plug-in model getting into a state where plug-ins disagree about which `System.Reactive.dll` is loaded**
 
 This problem ([issue #97](https://github.com/dotnet/reactive/issues/97)) arose because Rx NuGet packages contained two different DLLs with identical strong names, either of which could be loaded into the same .NET Framework host process. In this proposal that can't happen. The following bullet points explain why each of the packages described is immune to this (because the reasoning is slightly different for each set):
 
 * `System.Reactive.Core`: since only one target (`netstandard2.0`) can be loaded by .NET Framework, disagreement can't arise about which DLL represents any single assembly identity
-* `System.Reactive`: again, only one target (`net472` in this case) can be loaded by .NET Framework, (and likewise for any `System.Reactive.PlatformServices` dependencies, if we do that)
-* As for the UI-specific packages, because this plug-in problem exists only for .NET Framework, not .NET 6.0+, we only have to consider the Window Forms and WPF ones, and only the .NET Framework versions of those, of which there will be just one supported target (`net472`) so the problem will not arise
+* `System.Reactive`: this is trickier because there are two targets that could be loaded into a .NET Framework process: `net472` and `netstandard2.0`; however all currently tooling will select the `net472` version for any .NET Framework project using 4.7.2 or later (and Rx 5.0 and 6.0 already didn't support plug-in scenarios for hosts using older versions of .NET Framework)
+* As for the UI-specific packages, because this plug-in problem exists only for .NET Framework, not .NET 6.0+, we only have to consider the Window Forms and WPF ones, and only the .NET Framework versions of those; these will have just one applicable target (`net472`) so the problem will not arise
 
-**Note:** for future versions of Rx, a critical aspect of this design is that we can't offer both `net472` and `net48` targets. We can certainly _support_ `net48`, but it is supported by offering a `net472` version. Since .NET Framework is at a point where Microsoft is not planning any significant new feature development, this shouldn't be a problem.
+**Note:** for future versions of Rx, a critical aspect of this design is that we can't offer both `net472` and `net48` targets. We can certainly _support_ `net48`, but it is supported by offering a `net472` version. Since .NET Framework is at a point where Microsoft is not planning any significant new feature development, this shouldn't be a problem. The only situation in which we envisaging adding `net48` as a target would be if we were dropping support for `net472`, so we'd still have just one .NET Framework target.
 
 
 **2: Incompatible mixes of version numbers of Rx components**
 
 This problem ([#305](https://github.com/dotnet/reactive/issues/305)) arose because Rx 3.0 played games with .NET assembly version numbers to solve [issue #97](https://github.com/dotnet/reactive/issues/97). But in this design option, we are not playing any such games, because issue 97 is addressed without needing to resort to such tricks.
 
-As it happens, the extent of this second problem is dramatically reduced. Even if we did use versioning tricks, it turns out that if you use the modern ".NET SDK" style of project, NuGet handles this situation correctly. But since we aren't planning to do that, this design option eliminates this problem even for the old project system.
+As it happens, the extent of this second problem has shrunk dramatically thanks to change in tooling. Even if we did use versioning tricks, it turns out that if you use the modern ".NET SDK" style of project, NuGet handles this situation correctly. But since we aren't planning to do that, this design option eliminates this problem even for the old project system.
 
 **3. Applications getting WPF and Windows Forms dependencies even though they use neither of these frameworks**
 
 This problem is relevant only to .NET 6.0+ applications. (It's not a problem on .NET Framework, because WPF and Windows Forms are invariably deployed as part of the runtime—there is no deployment model for .NET Framework in which applications ship their own copy of WPF or Windows Forms unless they have chosen to incorporate a complete .NET Framework installer.)
 
-This design option solves this by not having any `.net6.0-windowsXXX` targets in the main Rx components. The `System.Reactive.Core` and `System.Reactive` components target `.net6.0` but not `.net6.0-windows10.0.19041`. This means the core components cannot possibly take a dependency on either WPF or Windows Forms. That means that any applications or libraries targeting other UI frameworks such as WinUI, MAUI, or Avalonia can take a dependency on `System.Reactive.Core` without bringing in any WPF or Windows Forms code. You will only end up with a dependency on those frameworks if you use the corresponding `System.Reactive.Windows.Forms` or `System.Reactive.Wpf` NuGet packages.
+This design option solves this by not having any `.net6.0-windowsXXX` targets in the main Rx components. `System.Reactive.Core` targets `.net6.0` but not `.net6.0-windows10.0.19041`. `System.Reactive` continues to target `-windows` type TFMs, but in this design it is deprecated, and retained only for backwards compatibility. This means `System.Reactive.Core` cannot possibly take a dependency on either WPF or Windows Forms. That means that any applications or libraries targeting other UI frameworks such as WinUI, MAUI, or Avalonia can take a dependency on `System.Reactive.Core` without bringing in any WPF or Windows Forms code. You will only end up with a dependency on those frameworks if you use the corresponding `System.Reactive.Windows.Forms` or `System.Reactive.Wpf` NuGet packages.
 
 
 #### Option 2
